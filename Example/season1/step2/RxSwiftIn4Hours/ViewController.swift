@@ -84,4 +84,37 @@ class ViewController: UITableViewController {
             })
             .disposed(by: disposeBag)
     }
+    
+    // Observable.create() 사용 예시
+    private func rxImageLoader(_ src: URL) -> Observable<UIImage?> {
+        
+        return Observable.create { emitter in
+            
+            let task = URLSession.shared.dataTask(with: src, completionHandler: { [weak self] (data, response, error) in
+                
+                if error != nil {
+                    emitter.onError(error!)
+                    return
+                }
+                // 데이터 없으니까 onCompleted 사용해서 끝내기
+                guard let data = data else {
+                    emitter.onCompleted()
+                    return
+                }
+                
+                let image = UIImage(data: data)
+                emitter.onNext(image)
+            })
+            
+            task.resume()
+            
+            return Disposables.create() {
+                task.cancel()
+            }
+        }
+//        guard let data = try? Data(contentsOf: url) else { return nil }
+//
+//        let image = UIImage(data: data)
+//        return image
+    }
 }

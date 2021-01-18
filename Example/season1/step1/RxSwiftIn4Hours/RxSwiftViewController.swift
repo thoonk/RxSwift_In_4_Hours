@@ -11,8 +11,10 @@ import UIKit
 
 class RxSwiftViewController: UIViewController {
     // MARK: - Field
-
+    
     var counter: Int = 0
+//    var disposable: Disposable?
+    var disposeBag: DisposeBag = DisposeBag()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,8 +34,8 @@ class RxSwiftViewController: UIViewController {
     @IBAction func onLoadImage(_ sender: Any) {
         imageView.image = nil
 
-        _ = rxswiftLoadImage(from: LARGER_IMAGE_URL)
-            .observeOn(MainScheduler.instance)
+        rxswiftLoadImage(from: LARGER_IMAGE_URL)
+            .observe(on: MainScheduler.instance)
             .subscribe({ result in
                 switch result {
                 case let .next(image):
@@ -46,10 +48,13 @@ class RxSwiftViewController: UIViewController {
                     break
                 }
             })
+            .disposed(by: disposeBag)
+//        disposeBag.insert(disposable)
     }
 
     @IBAction func onCancel(_ sender: Any) {
         // TODO: cancel image loading
+        disposeBag = DisposeBag()
     }
 
     // MARK: - RxSwift

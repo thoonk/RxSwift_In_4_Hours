@@ -13,6 +13,8 @@ import UIKit
 let MEMBER_LIST_URL = "https://my.api.mockaroo.com/members_with_avatar.json?key=44ce18f0"
 
 class ViewController: UIViewController {
+    var disposeBag = DisposeBag()
+    
     @IBOutlet var timerLabel: UILabel!
     @IBOutlet var editView: UITextView!
 
@@ -21,6 +23,11 @@ class ViewController: UIViewController {
         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             self?.timerLabel.text = "\(Date().timeIntervalSince1970)"
         }
+    }
+    // dispose하는 방식
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+//        disposable?.dispose()
     }
 
     private func setVisibleWithAnimation(_ v: UIView?, _ s: Bool) {
@@ -51,7 +58,7 @@ class ViewController: UIViewController {
     // 4. onCompleted or onError
     // 5. Disposed
     
-    func downloadJSON(_ url: String) -> Observable<String?> {
+    func downloadJSON(_ url: String) -> Observable<String> {
         // 1. 비동기로 생기는 데이터를 Observable로 감싸서 리턴하는 방법
         // sugar api
         // Just
@@ -115,18 +122,30 @@ class ViewController: UIViewController {
         self.setVisibleWithAnimation(self.activityIndicator, true)
         
         // 2. Observable로 오는 데이터를 받아서 처리하는 방법
-        let observable = downloadJSON(MEMBER_LIST_URL)
+//        let observable = downloadJSON(MEMBER_LIST_URL)
+        let jsonObservable = downloadJSON(MEMBER_LIST_URL)
+        let helloObservable = Observable.just("Hello World")
         
-        
-        observable
-            .map { json in json?.count ?? 0 }
-            .filter { cnt in cnt > 0 }
-            .map { "\($0)" }
+        Observable.zip(jsonObservable, helloObservable) { $0 + "\n" + $1 }
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { json in
+                
                 self.editView.text = json
                 self.setVisibleWithAnimation(self.activityIndicator, false)
             })
+            .disposed(by: disposeBag)
+        
+//        disposeBag.insert(disposable)
+        
+//        observable
+//            .map { json in json?.count ?? 0 }
+//            .filter { cnt in cnt > 0 }
+//            .map { "\($0)" }
+//            .observe(on: MainScheduler.instance)
+//            .subscribe(onNext: { json in
+//                self.editView.text = json
+//                self.setVisibleWithAnimation(self.activityIndicator, false)
+//            })
 
         
 //        observable.subscribe(onNext: { print($0) },
